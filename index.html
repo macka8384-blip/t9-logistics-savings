@@ -125,5 +125,25 @@ const calculateAfterVehicleValidation=calculate;
 calculate=function(){if(validateVehicleRows())calculateAfterVehicleValidation()};
 if(!document.querySelector('.fleet-row'))addVehicle();
 let fleetTip=document.querySelector('#fleet .hint');fleetTip.innerHTML='车辆信息为选填：<b>整组留空可直接跳过</b>；如开始填写，需完整选择能源类型、车型，并填写数量、固定成本和油费/电费。';
+</script>
+<script>
+/* Custom vehicle model option. */
+function ensureOtherModel(row){
+  let select=row.querySelector('.vmodel');
+  if(select&&![...select.options].some(o=>o.value==='其他'))select.insertAdjacentHTML('beforeend','<option value="其他">其他</option>');
+}
+document.querySelectorAll('.fleet-row').forEach(ensureOtherModel);
+const addVehicleWithStandardModels=addVehicle;
+addVehicle=function(...args){addVehicleWithStandardModels(...args);let rows=document.querySelectorAll('.fleet-row');ensureOtherModel(rows[rows.length-1])};
+const autoStandardVehicleCost=autoCost;
+autoCost=function(id){
+  let row=document.querySelector(`.fleet-row[data-id="${id}"]`);
+  if(row&&row.querySelector('.vmodel').value==='其他'){
+    row.querySelector('.vfixed').value='';row.querySelector('.venergy').value='';
+    row.querySelector('.vfixed').placeholder='请手动填写';row.querySelector('.venergy').placeholder='请手动填写';
+    toast('其他车型请填写实际固定成本和油费/电费');return;
+  }
+  autoStandardVehicleCost(id);
+};
 </script></body></html>
 
