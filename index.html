@@ -104,5 +104,26 @@ makeReportPages=function(){
   pdfSection(p,'为什么能省下这些费用');let reasons=['智能开单、流程协同、工作量化和绩效管理，提升人员效率。','智能路线规划减少绕路、空驶和重复派车。','智能装车和车辆匹配减少装载不足及临时换车。','到发货协同、装卸排队和周转管理提升场地利用效率。'];reasons.forEach(t=>{p.y=pdfText(p.x,'• '+t,80,p.y,1060,21,'#43516a',false,34)+17});p.y+=30;
   pdfSection(p,'报告说明');pdfText(p.x,'本报告依据客户填写数据生成，用于识别潜在改善空间，不构成收益承诺。未填写的选填项目未参与计算。',80,p.y,1060,19,'#68758a',false,32);pages.push(p.c);return pages;
 };
+</script>
+<script>
+/* Vehicle-entry guard: never silently discard partially completed rows. */
+function validateVehicleRows(){
+  let rows=[...document.querySelectorAll('.fleet-row')],complete=0;
+  for(let row of rows){
+    let power=row.querySelector('.vpower'),model=row.querySelector('.vmodel'),count=row.querySelector('.vcount'),fixed=row.querySelector('.vfixed'),energy=row.querySelector('.venergy');
+    let started=power.value||model.value||count.value.trim()||fixed.value.trim()||energy.value.trim();
+    if(!started)continue;
+    for(let item of [[power,'请选择车辆能源类型'],[model,'请选择具体车型'],[count,'请填写车辆数量'],[fixed,'请填写每辆固定成本'],[energy,'请填写每辆油费或电费']]){
+      if(!item[0].value||(['number'].includes(item[0].type)&&Number(item[0].value)<=0)){toast(item[1]);item[0].focus();return false}
+    }
+    complete++;
+  }
+  if(n('vehicleKm')>0&&!complete){toast('已填写车辆里程，请先完整填写一组车辆');let first=document.querySelector('.fleet-row .vpower');if(first)first.focus();return false}
+  return true;
+}
+const calculateAfterVehicleValidation=calculate;
+calculate=function(){if(validateVehicleRows())calculateAfterVehicleValidation()};
+if(!document.querySelector('.fleet-row'))addVehicle();
+let fleetTip=document.querySelector('#fleet .hint');fleetTip.innerHTML='车辆信息为选填：<b>整组留空可直接跳过</b>；如开始填写，需完整选择能源类型、车型，并填写数量、固定成本和油费/电费。';
 </script></body></html>
 
