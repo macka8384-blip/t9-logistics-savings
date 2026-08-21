@@ -207,7 +207,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElement
 document.addEventListener('pointerdown',e=>{let b=e.target.closest('.btn');if(!b)return;let r=b.getBoundingClientRect(),dot=document.createElement('span');dot.style.cssText=`position:absolute;width:10px;height:10px;border-radius:50%;background:#ffffff66;left:${e.clientX-r.left-5}px;top:${e.clientY-r.top-5}px;transform:scale(0);animation:sparkFly .45s ease-out forwards;--x:0px;--y:0px`;b.appendChild(dot);setTimeout(()=>dot.remove(),500)});
 </script>
 <style>
-.logo{background-position:center 18%;background-size:240% auto}
+.logo{background-position:center 18%;background-size:240% auto}.field.valid label .req{display:none}
 </style>
 <script>
 const confirmCarefulDataBranded=confirmCarefulData;
