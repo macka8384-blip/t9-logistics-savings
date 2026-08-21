@@ -145,5 +145,39 @@ autoCost=function(id){
   }
   autoStandardVehicleCost(id);
 };
+</script>
+<script>
+/* 2026-08-21 final eligibility and partner-driver rules. */
+document.head.insertAdjacentHTML('beforeend',`<style>
+.eligibility-mask{position:fixed;z-index:80;inset:0;display:none;align-items:center;justify-content:center;padding:22px;background:#102346a8;backdrop-filter:blur(5px)}.eligibility-mask.show{display:flex}.eligibility-dialog{width:min(430px,100%);padding:25px 21px;border-radius:22px;background:#fff;box-shadow:0 20px 60px #07163055}.eligibility-icon{display:grid;place-items:center;width:54px;height:54px;margin-bottom:15px;border-radius:17px;background:#edf4ff;color:#1768da;font-size:27px;font-weight:900}.eligibility-dialog h3{margin:0 0 10px;font-size:21px}.eligibility-dialog p{margin:0 0 18px;color:#65738a;font-size:14px;line-height:1.75}.eligibility-dialog strong{color:#1768da}.eligibility-dialog .btn{min-height:46px}
+</style>`);
+let dedicatedOption=[...ct.options].find(o=>o.textContent.trim()==='专线物流');if(dedicatedOption)dedicatedOption.remove();
+document.body.insertAdjacentHTML('beforeend',`<div class="eligibility-mask" id="eligibilityMask" role="dialog" aria-modal="true" aria-labelledby="eligibilityTitle"><div class="eligibility-dialog"><div class="eligibility-icon">i</div><h3 id="eligibilityTitle">当前暂不建议生成降本报告</h3><p id="eligibilityText"></p><button class="btn primary" onclick="closeEligibilityNotice()">返回调整人员结构</button></div></div>`);
+function showEligibilityNotice(teamCount){
+  result=null;
+  document.getElementById('eligibilityText').innerHTML=`根据您填写的人员结构，除合作司机外，当前核心运营团队共 <strong>${teamCount} 人</strong>。T9 的智能开单、调度协同、绩效量化等能力更适合 8 人及以上团队；现阶段较难充分释放系统的降本价值，因此暂不生成节省测算报告。建议先完善基础流程，待团队规模或业务复杂度提升后再进行评估。`;
+  document.getElementById('eligibilityMask').classList.add('show');
+}
+function closeEligibilityNotice(){document.getElementById('eligibilityMask').classList.remove('show');show('people')}
+calculate=function(){
+  if(!validateVehicleRows())return;
+  let roles=[],totalStaff=0,eligibleStaff=0,laborBase=0;
+  publicRoles.forEach((d,i)=>{
+    let count=Math.max(0,+document.getElementById('prc'+i).value||0),salary=Math.max(0,+document.getElementById('prs'+i).value||0),isPartner=i===6;
+    totalStaff+=count;
+    if(!isPartner){eligibleStaff+=count;laborBase+=count*salary*12}
+    roles.push({name:d[0],count,salary,excludedFromLaborSaving:isPartner});
+  });
+  if(eligibleStaff<8){showEligibilityNotice(eligibleStaff);return}
+  let vs=publicVehicles(),vehicleCount=vs.reduce((s,v)=>s+v.count,0),energyBase=vs.reduce((s,v)=>s+v.energy*v.count*12,0),vehicleBase=vs.reduce((s,v)=>s+(v.fixed+v.energy)*v.count*12,0),rent=n('rent'),area=n('area'),vehicleKm=n('vehicleKm');
+  let parts={labor:[laborBase*.15,laborBase*.30],route:[energyBase*.05,energyBase*.20],loading:[vehicleBase*.07,vehicleBase*.15],space:[rent*12*.03,rent*12*.05]};
+  let low=Object.values(parts).reduce((s,x)=>s+x[0],0),high=Object.values(parts).reduce((s,x)=>s+x[1],0),costBase=laborBase+vehicleBase+rent*12;
+  result={companyType:ct.value,annualSales:n('annualSales'),orders:n('orders'),monthlyTons:n('monthlyTons'),monthlyCube:n('monthlyCube'),roles,staff:totalStaff,eligibleStaff,laborBase,vs,vehicleCount,energyBase,vehicleBase,vehicleKm,area,rent,parts,low,high,costBase,savedKm:[vehicleCount*vehicleKm*12*.05,vehicleCount*vehicleKm*12*.20]};
+  document.getElementById('date').textContent=new Date().toLocaleDateString('zh-CN')+' · 客户填写数据';
+  renderIntervalReport();
+  let overview=document.getElementById('overview');overview.innerHTML=overview.innerHTML.replace(`人员：${totalStaff} 人`,`人员：${totalStaff} 人（纳入人效测算 ${eligibleStaff} 人）`);
+  let laborText=document.querySelector('#impacts .impact p');if(laborText)laborText.insertAdjacentHTML('beforeend',' 合作司机属于外部运力合作，不纳入人员降本测算。');
+  show('result');
+};
 </script></body></html>
 
